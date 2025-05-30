@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Price List Analyzer - Мониторинг</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .metric-card h3 {
+            color: #5a67d8;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .metric-value.success {
+            color: #38a169;
+        }
+        
+        .metric-value.warning {
+            color: #d69e2e;
+        }
+        
+        .metric-value.error {
+            color: #e53e3e;
+        }
+        
+        .metric-description {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-healthy {
+            background-color: #38a169;
+        }
+        
+        .status-warning {
+            background-color: #d69e2e;
+        }
+        
+        .status-critical {
+            background-color: #e53e3e;
+        }
+        
+        .charts-section {
+            margin-bottom: 30px;
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+        }
+        
+        .chart-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .chart-card h3 {
+            color: #5a67d8;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .alerts-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .alert-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border-left: 4px solid;
+        }
+        
+        .alert-critical {
+            background-color: #fed7d7;
+            border-left-color: #e53e3e;
+        }
+        
+        .alert-warning {
+            background-color: #fefcbf;
+            border-left-color: #d69e2e;
+        }
+        
+        .alert-info {
+            background-color: #bee3f8;
+            border-left-color: #3182ce;
+        }
+        
+        .recommendations {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .recommendations h3 {
+            color: #5a67d8;
+            margin-bottom: 15px;
+        }
+        
+        .recommendations ul {
+            list-style: none;
+        }
+        
+        .recommendations li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .recommendations li:before {
+            content: "💡 ";
+            margin-right: 8px;
+        }
+        
+        .last-updated {
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 20px;
+        }
+        
+        .refresh-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            margin: 20px auto;
+            display: block;
+        }
+        
+        .refresh-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 Price List Analyzer</h1>
+        <p>Система мониторинга анализа прайс-листов</p>
+    </div>
+    
+    <div class="container">
+        <!-- Основные метрики -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <h3>🖥️ Состояние системы</h3>
+                <div class="metric-value" id="system-status">
+                    <span class="status-indicator status-healthy"></span>
+                    Здоровая
+                </div>
+                <div class="metric-description">Общий статус системы</div>
+            </div>
+            
+            <div class="metric-card">
+                <h3>📊 Процент успеха</h3>
+                <div class="metric-value success" id="success-rate">95.2%</div>
+                <div class="metric-description">Успешно обработанных файлов</div>
+            </div>
+            
+            <div class="metric-card">
+                <h3>🚀 CPU загрузка</h3>
+                <div class="metric-value" id="cpu-usage">45.2%</div>
+                <div class="metric-description">Текущая загрузка процессора</div>
+            </div>
+            
+            <div class="metric-card">
+                <h3>💾 Память</h3>
+                <div class="metric-value" id="memory-usage">62.1%</div>
+                <div class="metric-description">Использование оперативной памяти</div>
+            </div>
+            
+            <div class="metric-card">
+                <h3>📁 Файлов обработано</h3>
+                <div class="metric-value success" id="files-processed">1,247</div>
+                <div class="metric-description">Всего файлов обработано</div>
+            </div>
+            
+            <div class="metric-card">
+                <h3>🏪 Поставщики</h3>
+                <div class="metric-value" id="suppliers-count">23</div>
+                <div class="metric-description">Активных поставщиков</div>
+            </div>
+        </div>
+        
+        <!-- Графики -->
+        <div class="charts-section">
+            <h2 style="text-align: center; margin-bottom: 20px; color: #5a67d8;">📈 Аналитика</h2>
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h3>Использование системных ресурсов</h3>
+                    <canvas id="systemChart" width="400" height="200"></canvas>
+                </div>
+                
+                <div class="chart-card">
+                    <h3>Статистика обработки файлов</h3>
+                    <canvas id="processingChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Алерты -->
+        <div class="alerts-section">
+            <h3>🚨 Уведомления</h3>
+            <div id="alerts-container">
+                <div class="alert-item alert-info">
+                    <div>
+                        <strong>Информация:</strong> Система работает в штатном режиме
+                        <br><small>Последняя проверка: только что</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Рекомендации -->
+        <div class="recommendations">
+            <h3>💡 Рекомендации</h3>
+            <ul id="recommendations-list">
+                <li>Система работает стабильно</li>
+                <li>Рассмотрите увеличение частоты резервного копирования</li>
+                <li>Обновите индексы для улучшения производительности поиска</li>
+            </ul>
+        </div>
+        
+        <button class="refresh-btn" onclick="refreshMetrics()">🔄 Обновить данные</button>
+        
+        <div class="last-updated" id="last-updated">
+            Последнее обновление: загрузка...
+        </div>
+    </div>
+    
+    <script>
+        // Конфигурация графиков
+        const chartConfig = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        };
+        
+        // График системных ресурсов
+        const systemCtx = document.getElementById('systemChart').getContext('2d');
+        const systemChart = new Chart(systemCtx, {
+            type: 'line',
+            data: {
+                labels: ['5 мин назад', '4 мин', '3 мин', '2 мин', '1 мин', 'Сейчас'],
+                datasets: [
+                    {
+                        label: 'CPU %',
+                        data: [40, 45, 42, 48, 44, 45],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4
+                    },
+                    {
+                        label: 'RAM %',
+                        data: [58, 60, 59, 62, 61, 62],
+                        borderColor: '#f093fb',
+                        backgroundColor: 'rgba(240, 147, 251, 0.1)',
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: chartConfig
+        });
+        
+        // График обработки файлов
+        const processingCtx = document.getElementById('processingChart').getContext('2d');
+        const processingChart = new Chart(processingCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Excel', 'PDF (текст)', 'PDF (OCR)', 'Ошибки'],
+                datasets: [{
+                    label: 'Процент успеха',
+                    data: [98, 92, 78, 5],
+                    backgroundColor: [
+                        'rgba(56, 161, 105, 0.8)',
+                        'rgba(56, 161, 105, 0.6)',
+                        'rgba(214, 158, 46, 0.8)',
+                        'rgba(229, 62, 62, 0.8)'
+                    ],
+                    borderColor: [
+                        '#38a169',
+                        '#38a169',
+                        '#d69e2e',
+                        '#e53e3e'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+        
+        // Функция обновления метрик
+        async function refreshMetrics() {
+            try {
+                // Имитация загрузки данных
+                const response = await fetch('/api/metrics');
+                
+                if (response.ok) {
+                    const metrics = await response.json();
+                    updateMetricsDisplay(metrics);
+                } else {
+                    // Имитация данных для демонстрации
+                    const mockMetrics = generateMockMetrics();
+                    updateMetricsDisplay(mockMetrics);
+                }
+            } catch (error) {
+                console.log('Используем демо-данные:', error);
+                const mockMetrics = generateMockMetrics();
+                updateMetricsDisplay(mockMetrics);
+            }
+            
+            // Обновление времени
+            document.getElementById('last-updated').textContent = 
+                `Последнее обновление: ${new Date().toLocaleString('ru-RU')}`;
+        }
+        
+        function generateMockMetrics() {
+            return {
+                system: {
+                    cpu_percent: Math.random() * 30 + 20,
+                    memory_percent: Math.random() * 20 + 50,
+                    disk_usage_percent: Math.random() * 10 + 60
+                },
+                processing: {
+                    success_rate: Math.random() * 10 + 90,
+                    files_processed_total: Math.floor(Math.random() * 100) + 1200,
+                    errors_last_hour: Math.floor(Math.random() * 5)
+                },
+                business: {
+                    total_suppliers: Math.floor(Math.random() * 10) + 20,
+                    total_products: Math.floor(Math.random() * 500) + 5000
+                },
+                health_status: ['healthy', 'warning', 'critical'][Math.floor(Math.random() * 3)],
+                alerts: generateMockAlerts(),
+                recommendations: [
+                    'Система работает стабильно',
+                    'Рассмотрите оптимизацию PDF обработки',
+                    'Увеличьте частоту резервного копирования'
+                ]
+            };
+        }
+        
+        function generateMockAlerts() {
+            const alerts = [];
+            const alertTypes = [
+                { type: 'info', message: 'Система работает в штатном режиме' },
+                { type: 'warning', message: 'Высокая загрузка CPU в течение последнего часа' },
+                { type: 'critical', message: 'Низкий процент успешной обработки PDF файлов' }
+            ];
+            
+            // Случайно выбираем 1-2 алерта
+            const numAlerts = Math.floor(Math.random() * 2) + 1;
+            for (let i = 0; i < numAlerts; i++) {
+                alerts.push(alertTypes[Math.floor(Math.random() * alertTypes.length)]);
+            }
+            
+            return alerts;
+        }
+        
+        function updateMetricsDisplay(metrics) {
+            // Обновление основных метрик
+            const systemStatus = document.getElementById('system-status');
+            const statusClass = `status-${metrics.health_status === 'healthy' ? 'healthy' : 
+                                           metrics.health_status === 'warning' ? 'warning' : 'critical'}`;
+            systemStatus.innerHTML = `<span class="status-indicator ${statusClass}"></span>${
+                metrics.health_status === 'healthy' ? 'Здоровая' :
+                metrics.health_status === 'warning' ? 'Предупреждение' : 'Критическая'
+            }`;
+            
+            document.getElementById('success-rate').textContent = 
+                `${metrics.processing.success_rate.toFixed(1)}%`;
+            
+            const cpuElement = document.getElementById('cpu-usage');
+            cpuElement.textContent = `${metrics.system.cpu_percent.toFixed(1)}%`;
+            cpuElement.className = `metric-value ${metrics.system.cpu_percent > 80 ? 'error' : 
+                                                  metrics.system.cpu_percent > 60 ? 'warning' : 'success'}`;
+            
+            const memoryElement = document.getElementById('memory-usage');
+            memoryElement.textContent = `${metrics.system.memory_percent.toFixed(1)}%`;
+            memoryElement.className = `metric-value ${metrics.system.memory_percent > 85 ? 'error' : 
+                                                     metrics.system.memory_percent > 70 ? 'warning' : 'success'}`;
+            
+            document.getElementById('files-processed').textContent = 
+                metrics.processing.files_processed_total.toLocaleString('ru-RU');
+            
+            document.getElementById('suppliers-count').textContent = 
+                metrics.business.total_suppliers;
+            
+            // Обновление алертов
+            updateAlerts(metrics.alerts);
+            
+            // Обновление рекомендаций
+            updateRecommendations(metrics.recommendations);
+            
+            // Обновление графиков с новыми данными
+            updateCharts(metrics);
+        }
+        
+        function updateAlerts(alerts) {
+            const container = document.getElementById('alerts-container');
+            container.innerHTML = '';
+            
+            if (alerts.length === 0) {
+                container.innerHTML = `
+                    <div class="alert-item alert-info">
+                        <div>
+                            <strong>Информация:</strong> Нет активных уведомлений
+                            <br><small>Система работает стабильно</small>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            alerts.forEach(alert => {
+                const alertElement = document.createElement('div');
+                alertElement.className = `alert-item alert-${alert.type}`;
+                alertElement.innerHTML = `
+                    <div>
+                        <strong>${alert.type === 'critical' ? 'Критическое' : 
+                                  alert.type === 'warning' ? 'Предупреждение' : 'Информация'}:</strong> 
+                        ${alert.message}
+                        <br><small>Время: ${new Date().toLocaleTimeString('ru-RU')}</small>
+                    </div>
+                `;
+                container.appendChild(alertElement);
+            });
+        }
+        
+        function updateRecommendations(recommendations) {
+            const list = document.getElementById('recommendations-list');
+            list.innerHTML = '';
+            
+            recommendations.forEach(rec => {
+                const li = document.createElement('li');
+                li.textContent = rec;
+                list.appendChild(li);
+            });
+        }
+        
+        function updateCharts(metrics) {
+            // Добавление новых данных в график системных ресурсов
+            systemChart.data.labels.shift();
+            systemChart.data.labels.push('Сейчас');
+            
+            systemChart.data.datasets[0].data.shift();
+            systemChart.data.datasets[0].data.push(metrics.system.cpu_percent);
+            
+            systemChart.data.datasets[1].data.shift();
+            systemChart.data.datasets[1].data.push(metrics.system.memory_percent);
+            
+            systemChart.update();
+        }
+        
+        // Автоматическое обновление каждые 30 секунд
+        setInterval(refreshMetrics, 30000);
+        
+        // Первоначальная загрузка
+        refreshMetrics();
+    </script>
+</body>
+</html>

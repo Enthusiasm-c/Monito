@@ -1,0 +1,67 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# Environment variables
+.env
+*.env
+
+# Google credentials
+google_credentials.json
+service_account.json
+
+# Temporary files
+data/temp/
+*.tmp
+*.log
+
+# Jupyter notebooks
+.ipynb_checkpoints/
+
+# System files
+.DS_Store
+.vscode/
+.idea/
+
+# Logs
+logs/
+*.log
+
+# Data files (optional - remove if you want to include sample data)
+data/summary_*.xlsx
+data/system_stats.json
+
+# Training data results
+training_data/comparison_results/
+training_data/original_files/*.xlsx
+training_data/original_files/*.xls
+
+# Temporary uploads
+*.xlsx
+*.xls
+!sample_*.xlsx
+!demo_*.xlsx

@@ -1,0 +1,50 @@
+{
+  "supplier": {
+    "name": "PT GLOBAL ANUGRAH PASIFIK",
+    "phone": "(0361) 9075914",
+    "whatsapp": "+856 755 3319",
+    "email": "sales@gap-indo.com",
+    "address": "Bali, Indonesia"
+  },
+  "products": [
+    {
+      "original_name": "SAPORITO Baked Bean in tomato sauce 2.65 Kg",
+      "brand": "SAPORITO",
+      "standardized_name": "SAPORITO Baked Beans in Tomato Sauce",
+      "size": "2.65",
+      "unit": "kg",
+      "price": 90000,
+      "currency": "IDR",
+      "category": "canned_food",
+      "confidence": 0.95
+    },
+    {
+      "original_name": "BARILLA Spaghetti No.5 500gr",
+      "brand": "BARILLA",
+      "standardized_name": "BARILLA Spaghetti No.5",
+      "size": "500",
+      "unit": "g",
+      "price": 25500,
+      "currency": "IDR",
+      "category": "pasta_noodles",
+      "confidence": 0.95
+    },
+    {
+      "original_name": "INDOMIE Mi Goreng Rasa Ayam 85g",
+      "brand": "INDOMIE",
+      "standardized_name": "INDOMIE Mi Goreng Chicken Flavor",
+      "size": "85",
+      "unit": "g",
+      "price": 3200,
+      "currency": "IDR",
+      "category": "pasta_noodles",
+      "confidence": 0.95
+    }
+  ],
+  "metadata": {
+    "document_type": "price_list",
+    "language": "indonesian/english",
+    "total_pages": 4,
+    "notes": "Образец индонезийского прайс-листа с продуктами питания"
+  }
+}
