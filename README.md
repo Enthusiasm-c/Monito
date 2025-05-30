@@ -42,4 +42,42 @@ GOOGLE_SHEETS_ID=your_google_sheets_id
 python3 telegram_bot_advanced.py
 ```
 
+## 📁 Основные файлы
+
+```
+├── modules/                           # Основные модули
+│   ├── universal_excel_parser.py      # 📊 Универсальный парсер Excel
+│   ├── batch_chatgpt_processor.py     # 🤖 Пакетная обработка через GPT
+│   ├── google_sheets_manager.py       # 💾 Управление Google Sheets
+│   ├── training_data_manager.py       # 🧪 Система обучения
+│   └── system_monitor_simple.py       # 📈 Мониторинг системы
+├── telegram_bot_advanced.py           # 📱 Главный Telegram бот
+├── upload_and_process.py             # 📁 Прямая обработка файлов
+├── quick_reference_creator.py        # ✏️ Создание эталонов
+├── test_against_reference.py         # 🧪 Тестирование качества
+└── requirements.txt                   # 📦 Зависимости
+```
+
+## 🚀 Использование
+
+### Telegram бот (основной способ)
+```bash
+python3 telegram_bot_advanced.py
+```
+
+### Прямая обработка файлов
+```bash
+python3 upload_and_process.py
+```
+
+### Создание эталонных данных
+```bash
+python3 quick_reference_creator.py
+```
+
+### Тестирование системы
+```bash
+python3 test_against_reference.py
+```
+
 ## 🎯 Система готова обрабатывать любые прайс-листы!
