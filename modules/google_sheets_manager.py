@@ -212,36 +212,69 @@ class GoogleSheetsManager:
     def update_master_table(self, standardized_data: Dict[str, Any]) -> Dict[str, Any]:
         """Обновление основной таблицы данными"""
         try:
+            logger.info(f"💾 Начинаем сохранение в Google Sheets...")
+            
             if not self.is_connected():
+                logger.error(f"❌ Нет подключения к Google Sheets")
                 return {'error': 'Нет подключения к Google Sheets'}
             
             # Создаем основную таблицу если не существует
             if not self.create_master_table():
+                logger.error(f"❌ Не удалось создать основную таблицу")
                 return {'error': 'Не удалось создать основную таблицу'}
             
             worksheet = self.get_or_create_worksheet("Master Table")
             supplier = standardized_data.get('supplier', {})
             products = standardized_data.get('products', [])
             
+            logger.info(f"📊 Получено товаров для сохранения: {len(products)}")
+            
             if not products:
+                logger.error(f"❌ Нет товаров для добавления")
                 return {'error': 'Нет товаров для добавления'}
             
             # Валидация товаров
+            logger.info(f"🔍 Начинаем валидацию {len(products)} товаров...")
             validated_products = []
             validation_errors = []
+            detailed_errors = []
             
             for i, product in enumerate(products):
                 validation = self._validate_product_data(product)
                 if validation['valid']:
                     validated_products.append(validation['cleaned_data'])
+                    logger.debug(f"✅ Товар {i+1} валиден: {product.get('standardized_name', product.get('original_name', 'N/A'))}")
                 else:
-                    validation_errors.append(f"Товар {i+1}: {', '.join(validation['errors'])}")
+                    error_details = f"Товар {i+1} ({product.get('standardized_name', product.get('original_name', 'N/A'))}): {', '.join(validation['errors'])}"
+                    validation_errors.append(error_details)
+                    detailed_errors.append({
+                        'index': i+1,
+                        'name': product.get('standardized_name', product.get('original_name', 'N/A')),
+                        'errors': validation['errors'],
+                        'raw_data': product
+                    })
+                    logger.warning(f"⚠️ {error_details}")
+            
+            loss_count = len(products) - len(validated_products)
+            loss_percentage = (loss_count / len(products) * 100) if len(products) > 0 else 0
+            
+            logger.info(f"📊 РЕЗУЛЬТАТ ВАЛИДАЦИИ:")
+            logger.info(f"   ✅ Валидных товаров: {len(validated_products)}/{len(products)} ({len(validated_products)/len(products)*100:.1f}%)")
+            logger.info(f"   ❌ Невалидных товаров: {loss_count}/{len(products)} ({loss_percentage:.1f}%)")
+            
+            if detailed_errors:
+                logger.warning(f"🔍 ДЕТАЛИ ВАЛИДАЦИОННЫХ ОШИБОК:")
+                for error in detailed_errors[:5]:  # Показываем первые 5 ошибок
+                    logger.warning(f"   • {error['name']}: {', '.join(error['errors'])}")
+                if len(detailed_errors) > 5:
+                    logger.warning(f"   ... и еще {len(detailed_errors) - 5} ошибок")
             
             if not validated_products:
+                logger.error(f"❌ КРИТИЧНО: Все товары содержат ошибки валидации")
                 return {'error': f'Все товары содержат ошибки: {"; ".join(validation_errors)}'}
             
             if validation_errors:
-                logger.warning(f"Обнаружены ошибки валидации: {validation_errors}")
+                logger.warning(f"⚠️ Товары с ошибками будут пропущены: {len(validation_errors)} из {len(products)}")
             
             # Заменяем products на валидированные данные
             products = validated_products

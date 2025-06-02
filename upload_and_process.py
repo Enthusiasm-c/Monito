@@ -10,7 +10,8 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from modules.advanced_excel_parser import AdvancedExcelParser
+from modules.universal_excel_parser import UniversalExcelParser
+from modules.pdf_parser import PDFParser
 from modules.batch_chatgpt_processor import BatchChatGPTProcessor
 from modules.google_sheets_manager import GoogleSheetsManager
 from dotenv import load_dotenv
@@ -28,10 +29,21 @@ async def process_file_directly(file_path: str):
     
     print(f"📄 Файл: {file_path}")
     
-    # 1. Парсинг Excel
+    # 1. Определение типа файла и парсинг
     print("\n🔍 Анализ файла...")
-    parser = AdvancedExcelParser()
-    extracted_data = parser.extract_products_smart(file_path, max_products=1000)
+    file_extension = Path(file_path).suffix.lower()
+    
+    if file_extension == '.pdf':
+        print("📄 Обрабатываю PDF файл (с AI-анализом)...")
+        parser = PDFParser()
+        extracted_data = parser.extract_products_from_pdf(file_path, max_products=1000, use_ai=True)
+    elif file_extension in ['.xlsx', '.xls']:
+        print("📊 Обрабатываю Excel файл (с AI-анализом)...")
+        parser = UniversalExcelParser()
+        extracted_data = parser.extract_products_universal(file_path, max_products=1000, use_ai=True)
+    else:
+        print(f"❌ Неподдерживаемый формат файла: {file_extension}")
+        return None
     
     if 'error' in extracted_data:
         print(f"❌ Ошибка парсинга: {extracted_data['error']}")
@@ -42,7 +54,10 @@ async def process_file_directly(file_path: str):
     
     print(f"✅ Извлечено товаров: {len(products)}")
     print(f"📊 Успешность: {stats.get('success_rate', 0):.1%}")
-    print(f"📋 Использован лист: {stats.get('used_sheet', 'N/A')}")
+    print(f"🔧 Метод извлечения: {stats.get('extraction_method', 'N/A')}")
+    print(f"🤖 AI Enhanced: {stats.get('ai_enhanced', False)}")
+    if stats.get('used_sheet'):
+        print(f"📋 Использован лист: {stats.get('used_sheet', 'N/A')}")
     
     if not products:
         print("❌ Товары не найдены")

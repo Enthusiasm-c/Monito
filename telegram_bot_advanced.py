@@ -26,11 +26,16 @@ from modules.google_sheets_manager import GoogleSheetsManager
 from modules.universal_excel_parser import UniversalExcelParser
 from modules.batch_chatgpt_processor import BatchChatGPTProcessor
 from modules.system_monitor_simple import monitor
+from modules.pdf_parser import PDFParser
 
-# Настройка логирования
+# Детальное логирование для бота с подробными логами
 logging.basicConfig(
+    level=logging.DEBUG,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler('bot_detailed.log', mode='w', encoding='utf-8')
+    ]
 )
 logger = logging.getLogger(__name__)
 
@@ -42,6 +47,7 @@ class AdvancedTelegramBot:
         self.openai_key = os.getenv('OPENAI_API_KEY')
         self.google_sheets = GoogleSheetsManager()
         self.excel_parser = UniversalExcelParser()
+        self.pdf_parser = PDFParser()
         self.chatgpt_processor = BatchChatGPTProcessor(self.openai_key) if self.openai_key else None
         self.temp_dir = "data/temp"
         os.makedirs(self.temp_dir, exist_ok=True)
@@ -66,7 +72,8 @@ class AdvancedTelegramBot:
 • Автоматический поиск столбцов с данными
 
 *📊 Что я умею:*
-• Обрабатывать Excel файлы (.xlsx, .xls) любого размера
+• Обрабатывать Excel (.xlsx, .xls) и PDF файлы любого размера
+• Извлекать таблицы из PDF с помощью Camelot/Tabula
 • Автоматически находить товары и цены
 • Стандартизировать через ChatGPT-4 пакетами
 • Сохранять в Google Sheets с валидацией
@@ -250,42 +257,78 @@ class AdvancedTelegramBot:
             )
     
     async def handle_document(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Обработка загруженных документов"""
-        logger.info(f"📎 Получен документ: {update.message.document.file_name}")
+        """Обработка загруженных документов с детальным логированием"""
+        user_id = update.effective_user.id
+        username = update.effective_user.username or update.effective_user.first_name
         document: Document = update.message.document
         
+        logger.info(f"🔥 НАЧАЛАСЬ ОБРАБОТКА ФАЙЛА")
+        logger.info(f"👤 Пользователь: {username} (ID: {user_id})")
+        logger.info(f"📎 Файл: {document.file_name}")
+        logger.info(f"📊 Размер: {document.file_size / 1024 / 1024:.2f} МБ")
+        
         # Валидация файла
+        logger.debug(f"🔍 Валидация файла...")
         validation_result = self._validate_file(document)
         if not validation_result['valid']:
+            logger.error(f"❌ Валидация не прошла: {validation_result['error']}")
             await update.message.reply_text(f"❌ {validation_result['error']}")
             return
         
+        logger.info(f"✅ Файл прошел валидацию")
+        
         if not self.google_sheets.is_connected():
+            logger.error(f"❌ Нет подключения к Google Sheets")
             await update.message.reply_text("❌ Нет подключения к Google Sheets")
             return
         
-        processing_message = await update.message.reply_text("🚀 Начинаю продвинутую обработку файла...")
+        logger.info(f"✅ Google Sheets подключены")
+        
+        processing_message = await update.message.reply_text("🚀 Начинаю продвинутую обработку файла с детальным логированием...")
         
         try:
             start_time = datetime.now()
+            logger.info(f"⏰ Начало обработки: {start_time}")
             
             # Скачивание файла
+            logger.debug(f"⬇️ Скачивание файла...")
             file = await context.bot.get_file(document.file_id)
             file_path = os.path.join(self.temp_dir, document.file_name)
             await file.download_to_drive(file_path)
             
-            logger.info(f"Файл скачан: {document.file_name}")
+            download_time = datetime.now()
+            logger.info(f"✅ Файл скачан за {(download_time - start_time).total_seconds():.1f}с: {document.file_name}")
+            logger.debug(f"📁 Путь к файлу: {file_path}")
             
             # Анализ структуры файла
-            await context.bot.edit_message_text(
-                chat_id=update.effective_chat.id,
-                message_id=processing_message.message_id,
-                text="🔍 Анализирую структуру Excel файла..."
-            )
+            file_extension = document.file_name.lower().split('.')[-1]
+            logger.info(f"📋 Тип файла: {file_extension.upper()}")
             
-            extracted_data = self.excel_parser.extract_products_universal(file_path, max_products=1000)
+            parsing_start = datetime.now()
+            if file_extension == 'pdf':
+                logger.info(f"🔍 НАЧИНАЕМ PDF ПАРСИНГ...")
+                await context.bot.edit_message_text(
+                    chat_id=update.effective_chat.id,
+                    message_id=processing_message.message_id,
+                    text="🔍 Анализирую структуру PDF файла и извлекаю таблицы с AI поддержкой..."
+                )
+                
+                extracted_data = self.pdf_parser.extract_products_from_pdf(file_path, max_products=1000, use_ai=True)
+            else:
+                logger.info(f"🔍 НАЧИНАЕМ EXCEL ПАРСИНГ...")
+                await context.bot.edit_message_text(
+                    chat_id=update.effective_chat.id,
+                    message_id=processing_message.message_id,
+                    text="🔍 Анализирую структуру Excel файла с AI поддержкой..."
+                )
+                
+                extracted_data = self.excel_parser.extract_products_universal(file_path, max_products=1000, use_ai=True)
+            
+            parsing_time = datetime.now()
+            logger.info(f"✅ ПАРСИНГ ЗАВЕРШЕН за {(parsing_time - parsing_start).total_seconds():.1f}с")
             
             if 'error' in extracted_data:
+                logger.error(f"❌ КРИТИЧНО: Ошибка парсинга файла: {extracted_data['error']}")
                 await context.bot.edit_message_text(
                     chat_id=update.effective_chat.id,
                     message_id=processing_message.message_id,
@@ -296,14 +339,24 @@ class AdvancedTelegramBot:
             products = extracted_data.get('products', [])
             stats = extracted_data.get('extraction_stats', {})
             
+            logger.info(f"📊 РЕЗУЛЬТАТ ПАРСИНГА:")
+            logger.info(f"   📦 Товаров извлечено: {len(products)}")
+            logger.info(f"   📄 Всего строк: {stats.get('total_rows', 0)}")
+            logger.info(f"   🔧 Метод: {stats.get('extraction_method', 'N/A')}")
+            logger.info(f"   🤖 AI Enhanced: {stats.get('ai_enhanced', False)}")
+            logger.info(f"   📊 Успешность: {stats.get('success_rate', 0):.1%}")
+            
             if not products:
+                logger.error(f"❌ КРИТИЧНО: Товары не найдены в файле")
                 await context.bot.edit_message_text(
                     chat_id=update.effective_chat.id,
                     message_id=processing_message.message_id,
-                    text=f"❌ Товары не найдены\n\n📊 Статистика извлечения:\n• Проанализировано строк: {stats.get('total_rows', 0)}\n• Пропущено строк: {stats.get('skipped_rows', 0)}"
+                    text=f"❌ Товары не найдены\n\n📊 Статистика извлечения:\n• Проанализировано строк: {stats.get('total_rows', 0)}\n• Метод: {stats.get('extraction_method', 'N/A')}\n• AI Enhanced: {stats.get('ai_enhanced', False)}"
                 )
-                monitor.record_file_processing('excel', False, 'No products found')
+                monitor.record_file_processing(file_extension, False, 'No products found')
                 return
+            
+            logger.info(f"✅ ПАРСИНГ УСПЕШЕН: {len(products)} товаров готовы к обработке")
             
             # Обновление статуса
             await context.bot.edit_message_text(
@@ -401,8 +454,9 @@ class AdvancedTelegramBot:
     
     def _validate_file(self, document: Document) -> dict:
         """Валидация файла"""
-        if not document.file_name.lower().endswith(('.xlsx', '.xls')):
-            return {'valid': False, 'error': 'Поддерживаются только Excel файлы (.xlsx, .xls)'}
+        supported_extensions = ('.xlsx', '.xls', '.pdf')
+        if not document.file_name.lower().endswith(supported_extensions):
+            return {'valid': False, 'error': 'Поддерживаются только Excel (.xlsx, .xls) и PDF файлы'}
         
         max_size = 20 * 1024 * 1024  # 20 MB
         if document.file_size > max_size:
@@ -454,14 +508,20 @@ class AdvancedTelegramBot:
 🤖 *ChatGPT обработка:*
 """
         
-        if processing_stats:
+        if processing_stats and not processing_stats.get('fallback_used', False):
             report += f"""• Обработано товаров: {processing_stats.get('total_output_products', 0)}/{processing_stats.get('total_input_products', 0)}
 • Успешных пакетов: {processing_stats.get('successful_batches', 0)}/{processing_stats.get('total_batches', 0)}
 • Успешность: {processing_stats.get('success_rate', 0):.1%}
 • Использовано токенов: {processing_stats.get('estimated_tokens', 0)}
 """
         else:
-            report += "• Обработано без ChatGPT (fallback режим)\n"
+            # Fallback mode or no ChatGPT processing
+            total_products = len(standardized_data.get('products', []))
+            report += f"""• Обработано товаров: {total_products}/{total_products} (fallback режим)
+• ChatGPT недоступен или завершился с ошибкой
+• Использована базовая обработка без AI
+• Использовано токенов: 0
+"""
         
         report += f"""
 💾 *Google Sheets результат:*
