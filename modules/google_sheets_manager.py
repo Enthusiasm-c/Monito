@@ -532,3 +532,222 @@ class GoogleSheetsManager:
                     'Проверьте правильность GOOGLE_SHEET_ID'
                 ]
             }
+    
+    def create_unified_price_comparison(self) -> Dict[str, Any]:
+        """Создает сводный прайс-лист со сравнением цен от всех поставщиков"""
+        try:
+            logger.info("🔄 Создание сводного прайс-листа со всеми поставщиками...")
+            
+            if not self.is_connected():
+                return {'error': 'Нет подключения к Google Sheets'}
+            
+            # Получаем данные из Master Table
+            master_worksheet = self.get_or_create_worksheet("Master Table")
+            if not master_worksheet:
+                return {'error': 'Основная таблица не найдена'}
+            
+            # Получаем все данные и заголовки
+            all_data = master_worksheet.get_all_records()
+            headers = master_worksheet.row_values(1)
+            
+            logger.info(f"📊 Найдено {len(all_data)} товаров в основной таблице")
+            
+            # Находим столбцы поставщиков (заканчивающиеся на _Price)
+            supplier_columns = {}
+            for i, header in enumerate(headers):
+                if header.endswith('_Price'):
+                    supplier_name = header.replace('_Price', '')
+                    supplier_columns[supplier_name] = i
+            
+            logger.info(f"🏪 Найдено поставщиков: {len(supplier_columns)} - {list(supplier_columns.keys())}")
+            
+            if not supplier_columns:
+                return {'error': 'Не найдено данных поставщиков'}
+            
+            # Создаем или очищаем лист сравнения цен
+            comparison_worksheet = self.get_or_create_worksheet("Price Comparison")
+            comparison_worksheet.clear()
+            
+            # Создаем заголовки для сводной таблицы
+            comparison_headers = [
+                'Product Name',
+                'Category', 
+                'Unit',
+                'Best Price',
+                'Best Supplier',
+                'Price Difference %'
+            ]
+            
+            # Добавляем столбцы для каждого поставщика
+            for supplier in sorted(supplier_columns.keys()):
+                comparison_headers.extend([f'{supplier}_Price', f'{supplier}_Updated'])
+            
+            comparison_headers.extend(['Average Price', 'Suppliers Count', 'Last Updated'])
+            
+            # Подготавливаем данные для сводной таблицы
+            comparison_data = [comparison_headers]
+            stats = {
+                'total_products': len(all_data),
+                'products_with_prices': 0,
+                'suppliers_count': len(supplier_columns),
+                'average_price_difference': 0
+            }
+            
+            price_differences = []
+            
+            for product_row in all_data:
+                product_name = product_row.get('Product Name (EN)', '')
+                category = product_row.get('Category', 'general')
+                unit = product_row.get('Unit', 'pcs')
+                
+                if not product_name:
+                    continue
+                
+                # Собираем цены от всех поставщиков
+                supplier_prices = {}
+                supplier_dates = {}
+                
+                for supplier, col_index in supplier_columns.items():
+                    price_value = product_row.get(f'{supplier}_Price', '')
+                    date_value = product_row.get(f'{supplier}_Updated', '')
+                    
+                    if price_value and str(price_value).replace('.', '').replace(',', '').isdigit():
+                        try:
+                            price = float(str(price_value).replace(',', ''))
+                            if price > 0:
+                                supplier_prices[supplier] = price
+                                supplier_dates[supplier] = date_value
+                        except ValueError:
+                            continue
+                
+                if not supplier_prices:
+                    continue
+                
+                stats['products_with_prices'] += 1
+                
+                # Находим лучшую (минимальную) цену
+                best_price = min(supplier_prices.values())
+                best_supplier = min(supplier_prices.keys(), key=lambda k: supplier_prices[k])
+                
+                # Вычисляем среднюю цену и разброс
+                average_price = sum(supplier_prices.values()) / len(supplier_prices)
+                max_price = max(supplier_prices.values())
+                price_difference_pct = ((max_price - best_price) / best_price * 100) if best_price > 0 else 0
+                price_differences.append(price_difference_pct)
+                
+                # Формируем строку данных
+                row_data = [
+                    product_name,
+                    category,
+                    unit,
+                    f"{best_price:,.0f}",
+                    best_supplier,
+                    f"{price_difference_pct:.1f}%"
+                ]
+                
+                # Добавляем цены от каждого поставщика
+                for supplier in sorted(supplier_columns.keys()):
+                    if supplier in supplier_prices:
+                        row_data.extend([
+                            f"{supplier_prices[supplier]:,.0f}",
+                            supplier_dates.get(supplier, '')
+                        ])
+                    else:
+                        row_data.extend(['', ''])
+                
+                # Добавляем итоговую информацию
+                row_data.extend([
+                    f"{average_price:,.0f}",
+                    str(len(supplier_prices)),
+                    max(supplier_dates.values()) if supplier_dates else ''
+                ])
+                
+                comparison_data.append(row_data)
+            
+            # Сортируем по категориям, затем по названию
+            comparison_data[1:] = sorted(comparison_data[1:], key=lambda x: (x[1], x[0]))
+            
+            # Записываем данные в лист
+            range_end = gspread.utils.rowcol_to_a1(len(comparison_data), len(comparison_headers))
+            comparison_worksheet.update(f'A1:{range_end}', comparison_data)
+            
+            # Форматируем заголовки
+            comparison_worksheet.format('A1:' + gspread.utils.rowcol_to_a1(1, len(comparison_headers)), {
+                'backgroundColor': {'red': 0.1, 'green': 0.4, 'blue': 0.8},
+                'textFormat': {'bold': True, 'foregroundColor': {'red': 1, 'green': 1, 'blue': 1}}
+            })
+            
+            # Выделяем колонки лучших цен
+            if len(comparison_data) > 1:
+                best_price_range = f'D2:D{len(comparison_data)}'
+                comparison_worksheet.format(best_price_range, {
+                    'backgroundColor': {'red': 0.9, 'green': 1.0, 'blue': 0.9},
+                    'textFormat': {'bold': True}
+                })
+            
+            # Вычисляем итоговую статистику
+            if price_differences:
+                stats['average_price_difference'] = sum(price_differences) / len(price_differences)
+            
+            logger.info("✅ Сводный прайс-лист создан успешно")
+            logger.info(f"   📦 Товаров с ценами: {stats['products_with_prices']}")
+            logger.info(f"   🏪 Поставщиков: {stats['suppliers_count']}")
+            logger.info(f"   📊 Средний разброс цен: {stats['average_price_difference']:.1f}%")
+            
+            return {
+                'success': True,
+                'worksheet_name': 'Price Comparison',
+                'stats': stats,
+                'sheet_url': self.get_sheet_url()
+            }
+            
+        except Exception as e:
+            logger.error(f"Ошибка создания сводного прайс-листа: {e}")
+            return {'error': str(e)}
+    
+    def get_price_comparison_summary(self) -> Dict[str, Any]:
+        """Возвращает краткую сводку по сравнению цен"""
+        try:
+            if not self.is_connected():
+                return {'error': 'Нет подключения к Google Sheets'}
+            
+            # Получаем данные из листа сравнения
+            try:
+                comparison_worksheet = self.sheet.worksheet("Price Comparison")
+                data = comparison_worksheet.get_all_records()
+            except gspread.WorksheetNotFound:
+                return {'error': 'Лист сравнения цен не найден. Создайте его сначала.'}
+            
+            if not data:
+                return {'error': 'Нет данных в листе сравнения цен'}
+            
+            # Анализируем данные
+            categories = {}
+            total_savings = 0
+            suppliers = set()
+            
+            for row in data:
+                category = row.get('Category', 'general')
+                if category not in categories:
+                    categories[category] = {'count': 0, 'best_deals': []}
+                
+                categories[category]['count'] += 1
+                
+                # Находим поставщиков для этого товара
+                for key in row.keys():
+                    if key.endswith('_Price') and row[key]:
+                        supplier = key.replace('_Price', '')
+                        suppliers.add(supplier)
+            
+            return {
+                'total_products': len(data),
+                'categories': len(categories),
+                'categories_breakdown': categories,
+                'suppliers_count': len(suppliers),
+                'suppliers': list(suppliers),
+                'sheet_url': self.get_sheet_url()
+            }
+            
+        except Exception as e:
+            logger.error(f"Ошибка получения сводки: {e}")
+            return {'error': str(e)}

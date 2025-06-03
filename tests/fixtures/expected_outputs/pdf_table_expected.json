@@ -1,0 +1,12 @@
+{
+  "filename": "pdf_table.txt",
+  "expected_rows_in": 5,
+  "expected_rows_out": 5,
+  "format": "mock_pdf",
+  "challenges": [
+    "PDF table extraction",
+    "ASCII table parsing",
+    "Non-standard format",
+    "Mixed content"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "filename": "problematic.csv",
+  "expected_rows_in": 6,
+  "expected_rows_out": 4,
+  "challenges": [
+    "Empty cells",
+    "Non-numeric prices",
+    "Special characters",
+    "Multiline text"
+  ]
+}

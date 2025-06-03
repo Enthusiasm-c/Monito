@@ -1,0 +1,89 @@
+{
+  "mon_s01_fixtures": {
+    "description": "Simple evil test fixtures for MON-S01 regression testing",
+    "generator": "SimpleEvilFixtureGenerator",
+    "total_fixtures": 6,
+    "created_at": "2024-01-15",
+    "fixtures": [
+      {
+        "filename": "problematic.csv",
+        "expected_rows_in": 6,
+        "expected_rows_out": 4,
+        "challenges": [
+          "Empty cells",
+          "Non-numeric prices",
+          "Special characters",
+          "Multiline text"
+        ]
+      },
+      {
+        "filename": "large_data.csv",
+        "expected_rows_in": 150,
+        "expected_rows_out": 150,
+        "columns_count": 20,
+        "file_size_mb": 0.06,
+        "challenges": [
+          "Large file size",
+          "Many columns",
+          "Memory usage"
+        ]
+      },
+      {
+        "filename": "win1252.csv",
+        "expected_rows_in": 4,
+        "expected_rows_out": 4,
+        "encoding": "utf-8",
+        "delimiter": ";",
+        "challenges": [
+          "Encoding issues",
+          "Special characters",
+          "European CSV format"
+        ]
+      },
+      {
+        "filename": "empty_gaps.csv",
+        "expected_rows_in": 3,
+        "expected_rows_out": 3,
+        "challenges": [
+          "Empty rows",
+          "Empty column headers",
+          "Missing data",
+          "Unnamed columns"
+        ]
+      },
+      {
+        "filename": "pdf_table.txt",
+        "expected_rows_in": 5,
+        "expected_rows_out": 5,
+        "format": "mock_pdf",
+        "challenges": [
+          "PDF table extraction",
+          "ASCII table parsing",
+          "Non-standard format",
+          "Mixed content"
+        ]
+      },
+      {
+        "filename": "ocr_table.txt",
+        "expected_rows_in": 4,
+        "expected_rows_out": 4,
+        "format": "mock_ocr",
+        "challenges": [
+          "OCR text extraction",
+          "Joined words",
+          "Text parsing",
+          "Format recognition",
+          "OCR errors"
+        ]
+      }
+    ],
+    "test_objectives": [
+      "Data validation robustness",
+      "Error handling",
+      "Format compatibility",
+      "Performance under load",
+      "Edge case handling",
+      "Encoding support"
+    ]
+  }
+}

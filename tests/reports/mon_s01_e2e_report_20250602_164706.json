@@ -1,0 +1,316 @@
+{
+  "suite_name": "MON-S01 E2E Regression",
+  "start_time": 1748854026.295836,
+  "mock_mode": true,
+  "tests": [
+    {
+      "test_name": "fixtures_availability",
+      "status": "PASSED",
+      "details": {
+        "total_fixtures": 6,
+        "available_fixtures": 6,
+        "missing_files": [],
+        "manifest": {
+          "mon_s01_fixtures": {
+            "description": "Simple evil test fixtures for MON-S01 regression testing",
+            "generator": "SimpleEvilFixtureGenerator",
+            "total_fixtures": 6,
+            "created_at": "2024-01-15",
+            "fixtures": [
+              {
+                "filename": "problematic.csv",
+                "expected_rows_in": 6,
+                "expected_rows_out": 4,
+                "challenges": [
+                  "Empty cells",
+                  "Non-numeric prices",
+                  "Special characters",
+                  "Multiline text"
+                ]
+              },
+              {
+                "filename": "large_data.csv",
+                "expected_rows_in": 150,
+                "expected_rows_out": 150,
+                "columns_count": 20,
+                "file_size_mb": 0.06,
+                "challenges": [
+                  "Large file size",
+                  "Many columns",
+                  "Memory usage"
+                ]
+              },
+              {
+                "filename": "win1252.csv",
+                "expected_rows_in": 4,
+                "expected_rows_out": 4,
+                "encoding": "utf-8",
+                "delimiter": ";",
+                "challenges": [
+                  "Encoding issues",
+                  "Special characters",
+                  "European CSV format"
+                ]
+              },
+              {
+                "filename": "empty_gaps.csv",
+                "expected_rows_in": 3,
+                "expected_rows_out": 3,
+                "challenges": [
+                  "Empty rows",
+                  "Empty column headers",
+                  "Missing data",
+                  "Unnamed columns"
+                ]
+              },
+              {
+                "filename": "pdf_table.txt",
+                "expected_rows_in": 5,
+                "expected_rows_out": 5,
+                "format": "mock_pdf",
+                "challenges": [
+                  "PDF table extraction",
+                  "ASCII table parsing",
+                  "Non-standard format",
+                  "Mixed content"
+                ]
+              },
+              {
+                "filename": "ocr_table.txt",
+                "expected_rows_in": 4,
+                "expected_rows_out": 4,
+                "format": "mock_ocr",
+                "challenges": [
+                  "OCR text extraction",
+                  "Joined words",
+                  "Text parsing",
+                  "Format recognition",
+                  "OCR errors"
+                ]
+              }
+            ],
+            "test_objectives": [
+              "Data validation robustness",
+              "Error handling",
+              "Format compatibility",
+              "Performance under load",
+              "Edge case handling",
+              "Encoding support"
+            ]
+          }
+        }
+      },
+      "duration": 0.000576019287109375
+    },
+    {
+      "test_name": "single_fixture_problematic.csv",
+      "status": "PASSED",
+      "details": {
+        "success": true,
+        "file_size_bytes": 431,
+        "file_size_mb": 0.0,
+        "processing_time": 0.00431,
+        "rows_extracted": 6,
+        "rows_processed": 4,
+        "challenges_detected": [
+          "Empty cells",
+          "Non-numeric prices",
+          "Special characters",
+          "Multiline text"
+        ],
+        "difficulty_score": 4,
+        "mock_simulation": true
+      },
+      "duration": 0.0009999275207519531
+    },
+    {
+      "test_name": "single_fixture_large_data.csv",
+      "status": "PASSED",
+      "details": {
+        "success": true,
+        "file_size_bytes": 65790,
+        "file_size_mb": 0.06,
+        "processing_time": 0.6579,
+        "rows_extracted": 150,
+        "rows_processed": 150,
+        "challenges_detected": [
+          "Large file size",
+          "Many columns",
+          "Memory usage"
+        ],
+        "difficulty_score": 3,
+        "mock_simulation": true
+      },
+      "duration": 0.07593274116516113
+    },
+    {
+      "test_name": "single_fixture_win1252.csv",
+      "status": "PASSED",
+      "details": {
+        "success": true,
+        "file_size_bytes": 489,
+        "file_size_mb": 0.0,
+        "processing_time": 0.00489,
+        "rows_extracted": 4,
+        "rows_processed": 4,
+        "challenges_detected": [
+          "Encoding issues",
+          "Special characters",
+          "European CSV format"
+        ],
+        "difficulty_score": 3,
+        "mock_simulation": true
+      },
+      "duration": 0.0008609294891357422
+    },
+    {
+      "test_name": "single_fixture_empty_gaps.csv",
+      "status": "PASSED",
+      "details": {
+        "success": true,
+        "file_size_bytes": 221,
+        "file_size_mb": 0.0,
+        "processing_time": 0.00221,
+        "rows_extracted": 3,
+        "rows_processed": 3,
+        "challenges_detected": [
+          "Empty rows",
+          "Empty column headers",
+          "Missing data",
+          "Unnamed columns"
+        ],
+        "difficulty_score": 4,
+        "mock_simulation": true
+      },
+      "duration": 0.0003941059112548828
+    },
+    {
+      "test_name": "single_fixture_pdf_table.txt",
+      "status": "PASSED",
+      "details": {
+        "success": true,
+        "file_size_bytes": 1586,
+        "file_size_mb": 0.0,
+        "processing_time": 0.01586,
+        "rows_extracted": 5,
+        "rows_processed": 5,
+        "challenges_detected": [
+          "PDF table extraction",
+          "ASCII table parsing",
+          "Non-standard format",
+          "Mixed content"
+        ],
+        "difficulty_score": 4,
+        "mock_simulation": true
+      },
+      "duration": 0.002418994903564453
+    },
+    {
+      "test_name": "single_fixture_ocr_table.txt",
+      "status": "FAILED",
+      "details": {
+        "success": false,
+        "file_size_bytes": 1324,
+        "file_size_mb": 0.0,
+        "processing_time": 0.01324,
+        "rows_extracted": 4,
+        "rows_processed": 4,
+        "challenges_detected": [
+          "OCR text extraction",
+          "Joined words",
+          "Text parsing",
+          "Format recognition",
+          "OCR errors"
+        ],
+        "difficulty_score": 5,
+        "mock_simulation": true,
+        "error": "Mock failure: высокий difficulty_score (5)"
+      },
+      "duration": 0.0018832683563232422
+    },
+    {
+      "test_name": "batch_processing",
+      "status": "PASSED",
+      "details": {
+        "files_processed": 3,
+        "total_time": 0.6644200000000001,
+        "average_time": 0.22147333333333338,
+        "results": [
+          {
+            "filename": "large_data.csv",
+            "success": true,
+            "processing_time": 0.6579
+          },
+          {
+            "filename": "empty_gaps.csv",
+            "success": true,
+            "processing_time": 0.00221
+          },
+          {
+            "filename": "problematic.csv",
+            "success": true,
+            "processing_time": 0.00431
+          }
+        ],
+        "mode": "mock"
+      },
+      "duration": 0.07244205474853516
+    },
+    {
+      "test_name": "performance_regression",
+      "status": "PASSED",
+      "details": {
+        "file_size_mb": 0.06,
+        "processing_time_sec": 0.0,
+        "throughput_mb_per_sec": 15.0,
+        "target_throughput": 10.0,
+        "target_max_time": 0.01,
+        "mode": "mock"
+      },
+      "duration": 0.00010418891906738281
+    },
+    {
+      "test_name": "error_handling",
+      "status": "PASSED",
+      "details": {
+        "scenarios_tested": 3,
+        "error_results": [
+          {
+            "scenario": "Несуществующий файл",
+            "input": "nonexistent_file.csv",
+            "handled_gracefully": true,
+            "error_type": "mock_file_not_found",
+            "mode": "mock"
+          },
+          {
+            "scenario": "Пустой путь к файлу",
+            "input": "",
+            "handled_gracefully": true,
+            "error_type": "mock_file_not_found",
+            "mode": "mock"
+          },
+          {
+            "scenario": "Недопустимый путь",
+            "input": "/invalid/path/file.csv",
+            "handled_gracefully": true,
+            "error_type": "mock_file_not_found",
+            "mode": "mock"
+          }
+        ]
+      },
+      "duration": 5.7220458984375e-06
+    }
+  ],
+  "summary": {
+    "total_tests": 10,
+    "passed": 9,
+    "failed": 1,
+    "partial": 0,
+    "skipped": 0,
+    "pass_rate": 90.0,
+    "total_duration_sec": 0.16,
+    "average_test_duration": 0.02
+  },
+  "end_time": 1748854026.451693,
+  "total_duration": 0.15585708618164062
+}
