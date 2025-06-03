@@ -12,7 +12,7 @@ from pathlib import Path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from modules.training_data_manager import TrainingDataManager
-from modules.advanced_excel_parser import AdvancedExcelParser
+from modules.universal_excel_parser import UniversalExcelParser
 from modules.batch_chatgpt_processor import BatchChatGPTProcessor
 from dotenv import load_dotenv
 
@@ -46,8 +46,8 @@ async def test_single_example(example_name: str, trainer: TrainingDataManager):
     
     # 1. Тестируем парсер Excel
     print("\n📊 Тест парсера Excel...")
-    parser = AdvancedExcelParser()
-    extracted_data = parser.extract_products_smart(original_file, max_products=1000)
+    parser = UniversalExcelParser()
+    extracted_data = parser.extract_products_universal(original_file, max_products=1000)
     
     if 'error' in extracted_data:
         print(f"❌ Ошибка парсера: {extracted_data['error']}")

@@ -1,0 +1,12 @@
+{
+  "filename": "large_data.csv",
+  "expected_rows_in": 150,
+  "expected_rows_out": 150,
+  "columns_count": 20,
+  "file_size_mb": 0.06,
+  "challenges": [
+    "Large file size",
+    "Many columns",
+    "Memory usage"
+  ]
+}

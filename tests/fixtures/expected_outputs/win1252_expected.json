@@ -1,0 +1,12 @@
+{
+  "filename": "win1252.csv",
+  "expected_rows_in": 4,
+  "expected_rows_out": 4,
+  "encoding": "utf-8",
+  "delimiter": ";",
+  "challenges": [
+    "Encoding issues",
+    "Special characters",
+    "European CSV format"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "filename": "ocr_table.txt",
+  "expected_rows_in": 4,
+  "expected_rows_out": 4,
+  "format": "mock_ocr",
+  "challenges": [
+    "OCR text extraction",
+    "Joined words",
+    "Text parsing",
+    "Format recognition",
+    "OCR errors"
+  ]
+}

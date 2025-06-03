@@ -1,0 +1,11 @@
+{
+  "filename": "empty_gaps.csv",
+  "expected_rows_in": 3,
+  "expected_rows_out": 3,
+  "challenges": [
+    "Empty rows",
+    "Empty column headers",
+    "Missing data",
+    "Unnamed columns"
+  ]
+}
