@@ -6,7 +6,6 @@
 
 import os
 import sys
-import asyncio
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -151,7 +150,7 @@ class SimpleTelegramBot:
             # Тест интеллектуального препроцессора
             logger.debug("🧪 Импорт интеллектуального препроцессора...")
             from modules.intelligent_preprocessor import IntelligentPreProcessor
-            processor = IntelligentPreProcessor()
+            IntelligentPreProcessor()
             logger.info("✅ Интеллектуальный препроцессор успешно загружен")
             
             # Тест временной папки
@@ -162,7 +161,7 @@ class SimpleTelegramBot:
             else:
                 logger.warning(f"⚠️ Временная папка не найдена: {temp_path}")
             
-            result_text = f"""
+            result_text = """
 🔍 *Результаты тестирования*
 
 *📊 Компоненты:*
@@ -420,7 +419,7 @@ class SimpleTelegramBot:
                 await context.bot.edit_message_text(
                     chat_id=update.effective_chat.id,
                     message_id=processing_message.message_id,
-                    text=f"❌ Поддерживаются только Excel файлы (.xlsx, .xls)"
+                    text="❌ Поддерживаются только Excel файлы (.xlsx, .xls)"
                 )
             
         except Exception as e:
@@ -576,7 +575,6 @@ class SimpleTelegramBot:
 
     async def price_summary_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Команда для получения краткой сводки по сравнению цен"""
-        chat_id = update.effective_chat.id
         user_id = update.effective_user.id
         logger.info(f"📋 Пользователь {user_id} запросил сводку цен")
         
